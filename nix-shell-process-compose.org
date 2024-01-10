@@ -1,0 +1,204 @@
+
+* Reproducible developer shells and containerless stacks with nix
+
+** Presenter: Taylor Gunnoe
+   #+ATTR_ORG: :width 350 :center t
+   [[./tgunnoe.jpeg]]
+
+** TriDev, Feb 2024
+
+
+* Background
+
+** DoD contractor (2012-2013)
+   #+ATTR_ORG: :width 1050 :center t
+   [[./praefectus.png]]
+
+
+** NASA Worldview at GSFC (2013-2017)
+   #+ATTR_ORG: :width 1050 :center t
+   [[./worldview.jpg]]
+
+
+** Bitcoin and Crypto projects (2013-2022)
+
+*** Dark Wallet
+
+*** Defense Distributed
+
+*** DarkFi
+
+
+** Input Output Global (2022-Present)
+
+
+* Docker problems, the developer experience
+** - Impure, unable to reproduce
+   ~FROM ubuntu:22.04~
+
+** - Extra steps with each change: building, rebuilding
+** - Sharing results, private registries
+** - Fooling with networking, volumes, ports, envs
+   - Connecting to VPNs or changing network setup on host messes with setup
+** - Cross architecture issues
+*** Typically many different targets:
+     - ~x86_64-{linux, darwin}~
+     - ~aarch64-{linux, darwin}~
+
+*** Docker on macOS = Linux VM
+    - ~exec format error~ without ~aarch64-linux~ images
+    - Docker desktop might work with Rosetta, sometimes
+
+
+* What is nix?
+
+  #+ATTR_ORG: :width 250 :center t
+  [[./nixos-logo-only-hires.png]]
+   #+ATTR_ORG: :width 850 :center t
+  [[./phd.png]]
+
+** - An ecosystem centered around purely functional software
+** - All source based with binary cache capabilities
+** - It's a buildtime sandbox
+
+* Diving into the Nix Ecosystem
+
+** Nix CLI
+*** - ~nix show-derivation~
+*** - ~nix flake show~
+
+** Nix-lang
+*** - ="Json with functions"=
+*** - Purely Functional and lazy-eval
+*** - nix-repl for experimenting
+
+** Nixpkgs
+*** - Huge collection of nix-written libraries and functions, packages
+*** - https://github.com/nixos/nixpkgs
+*** - 80K+ packages
+    #+ATTR_ORG: :width 1050 :center t
+    [[./repology.png]]
+*** - NixOS-related modules and functions
+*** - Generic build mechanisms: stdenv.mkDerivation, trivial builders, …
+*** - Ecosystem-specific packaging mechanisms: buildGoModule, buildPythonApplication, …
+*** - Lazily evaluated
+*** - Examples:
+    [[~/src/nixpkgs/pkgs/by-name/he/hello/package.nix]]
+** NixOS
+   "modules" or typecheckings for nix
+
+
+* Flake.nix
+** - Entrypoint to git repository
+** - Inputs, outputs
+** - Example:
+     [[./simple/flake.nix][Simple Flake]]
+** ~Nix flake show~ / ~nix repl~
+
+* Nix shell
+** With Nix shell you can do things like:
+   #+NAME: basic-shell
+   #+BEGIN_SRC nix :json t
+     let
+       pkgs = import <nixpkgs> {};
+     in "${pkgs.mkShell {
+         name = "My shell 3";
+         buildInputs = with pkgs; [
+           git
+           curl
+         ];
+         shellHook = ''
+           echo "Welcome to my shell";
+               '';
+     }}"
+   #+END_SRC
+   #+RESULTS: basic-shell
+   : "/nix/store/0fanqs3pv0md8d658m9d52qd1fwxpvv0-My-shell-3"
+
+* Direnv
+** =Load and unload environment variables depending on the current directory=
+   #+BEGIN_SRC bash
+     if [[ $(type -t use_flake) != function ]]; then
+         echo "ERROR: use_flake function missing."
+         echo "Please update direnv to v2.30.0 or later."
+     else
+         use_flake
+     fi
+   #+END_SRC
+
+* Process compose
+  =is a simple and flexible scheduler and orchestrator to manage non-containerized applications.=
+** Looks like a docker compose file:
+   #+BEGIN_SRC yaml
+     version: "0.5"
+
+     environment:
+       - "GLOBAL_ENV_VAR=1"
+     log_location: /path/to/combined/output/logfile.log
+     log_level: debug
+
+     processes:
+       Manager:
+         command: "/path/to/manager"
+         availability:
+           restart: "always"
+         depends_on:
+           ClientA:
+             condition: process_started
+           ClientB:
+             condition: process_started
+
+       ClientA:
+         command: "/path/to/ClientA"
+         availability:
+           restart: "always"
+         depends_on:
+           Server_1A:
+             condition: process_started
+           Server_2A:
+             condition: process_started
+         environment:
+           - "LOCAL_ENV_VAR=1"
+
+       ClientB:
+         command: "/path/to/ClientB -some -arg"
+         availability:
+           restart: "always"
+         depends_on:
+           Server_1B:
+             condition: process_started
+           Server_2B:
+             condition: process_started
+         environment:
+           - "LOCAL_ENV_VAR=2"
+
+       Server_1A:
+         command: "/path/to/Server_1A"
+         availability:
+           restart: "always"
+
+       Server_2A:
+         command: "/path/to/Server_2A"
+         availability:
+           restart: "always"
+
+       Server_1B:
+         command: "/path/to/Server_1B"
+         availability:
+           restart: "always"
+
+       Server_2B:
+         command: "/path/to/Server_2B"
+         availability:
+           restart: "always"
+   #+END_SRC
+** Process-compose-flake
+*** Generates the yaml file using nix
+** Example flake (using flake-parts)
+   [[./flake-parts/flake.nix][Flake-parts]]
+* More about Nix
+** Nix-tree
+
+* The End
+  #+ATTR_ORG: :width 1050 :center t
+  [[./surrounded.webp]]
