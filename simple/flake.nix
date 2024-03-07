@@ -50,14 +50,14 @@
         };
       };
 
-      nixosConfigurations = {
-        tridev-os = inputs.nixpkgs.lib.nixosSystem {
-          modules = [
-            { nixpkgs.hostPlatform = "${system}"; }
-            ./system.nix
-          ];
-        };
-      };
+      # nixosConfigurations = {
+      #   tridev-os = inputs.nixpkgs.lib.nixosSystem {
+      #     modules = [
+      #       { nixpkgs.hostPlatform = "${system}"; }
+      #       #./system.nix
+      #     ];
+      #   };
+      # };
 
     };
 }

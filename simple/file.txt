@@ -1,0 +1,2 @@
+/nix/store/jaa9c8znl3bb0353f7s2mlq3bv0iq0q0-tridev-talk
+/nix/store/sr0wlkvkpmjamdi6k7fxnk1fapqyljs7-tridev-shell
